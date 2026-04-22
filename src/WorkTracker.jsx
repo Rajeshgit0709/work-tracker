@@ -71,6 +71,14 @@ export default function WorkTracker() {
       .nav-btn:hover { color: ${C.text} !important; }
       .session-row:hover { border-color: ${C.border} !important; }
       .add-btn:hover { border-color: ${C.accent} !important; color: ${C.accent} !important; }
+      .app-body { display: flex; max-width: 960px; margin: 0 auto; min-height: calc(100vh - 54px); flex-direction: row; }
+      .cal-panel { flex: 1; padding: 1.25rem; border-right: 1px solid ${C.border}; min-width: 0; }
+      .session-panel { width: 280px; padding: 1.25rem; display: flex; flex-direction: column; flex-shrink: 0; }
+      @media (max-width: 768px) {
+        .app-body { flex-direction: column; }
+        .cal-panel { border-right: none; border-bottom: 1px solid ${C.border}; padding: 1rem; }
+        .session-panel { width: 100%; padding: 1rem; }
+      }
     `;
     document.head.appendChild(s);
     return () => s.remove();
@@ -218,54 +226,51 @@ export default function WorkTracker() {
     </div>
   );
 
-  // ──────────────────────────── SETTINGS PANEL ────────────────────────────
-  const SettingsPanel = () => (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: "1.5rem", width: "100%", maxWidth: 380, ...font }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-          <span style={{ ...serif, fontSize: 18 }}>Settings</span>
-          <Btn variant="ghost" onClick={() => setShowSettings(false)}><X size={16} /></Btn>
-        </div>
-
-        {[
-          { label: "Your name", key: "name", placeholder: "e.g. Alex" },
-          { label: "Hourly rate", key: "hourlyRate", placeholder: "e.g. 12.50" },
-          { label: "Currency symbol", key: "currency", placeholder: "€" },
-        ].map(f => (
-          <div key={f.key} style={{ marginBottom: "1rem" }}>
-            <label style={{ fontSize: 11, color: C.muted, display: "block", marginBottom: 5 }}>{f.label}</label>
-            <input className="wt-input" value={settings[f.key]} placeholder={f.placeholder}
-              onChange={e => setSettings(s => ({ ...s, [f.key]: e.target.value }))} />
-          </div>
-        ))}
-
-        <div style={{ marginTop: "1.5rem", padding: "1rem", background: C.bg, borderRadius: 10, border: `1px solid ${C.border}` }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div>
-              <p style={{ fontSize: 13, color: C.text }}>Daily reminder</p>
-              <p style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>
-                {notifPerm === "granted" ? "Notifications enabled" : "Browser notifications"}
-              </p>
-            </div>
-            <Btn variant="ghost" onClick={requestNotif}
-              style={{ color: notifPerm === "granted" ? C.accent : C.muted }}>
-              {notifPerm === "granted" ? <Bell size={18} /> : <BellOff size={18} />}
-            </Btn>
-          </div>
-        </div>
-
-        <Btn variant="primary" onClick={() => { setShowSettings(false); setSaveMsg(true); setTimeout(() => setSaveMsg(false), 2000); }}
-          style={{ width: "100%", marginTop: "1.25rem", borderRadius: 10, fontSize: 14 }}>
-          {saveMsg ? "Saved ✓" : "Save Settings"}
-        </Btn>
-      </div>
-    </div>
-  );
-
   // ──────────────────────────── MAIN APP ────────────────────────────
   return (
     <div style={{ ...font, minHeight: "100vh", background: C.bg, color: C.text }}>
-      {showSettings && <SettingsPanel />}
+      {showSettings && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: "1.5rem", width: "100%", maxWidth: 380, ...font }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <span style={{ ...serif, fontSize: 18 }}>Settings</span>
+              <Btn variant="ghost" onClick={() => setShowSettings(false)}><X size={16} /></Btn>
+            </div>
+
+            {[
+              { label: "Your name", key: "name", placeholder: "e.g. Alex" },
+              { label: "Hourly rate", key: "hourlyRate", placeholder: "e.g. 12.50" },
+              { label: "Currency symbol", key: "currency", placeholder: "€" },
+            ].map(f => (
+              <div key={f.key} style={{ marginBottom: "1rem" }}>
+                <label style={{ fontSize: 11, color: C.muted, display: "block", marginBottom: 5 }}>{f.label}</label>
+                <input className="wt-input" value={settings[f.key]} placeholder={f.placeholder}
+                  onChange={e => setSettings(s => ({ ...s, [f.key]: e.target.value }))} />
+              </div>
+            ))}
+
+            <div style={{ marginTop: "1.5rem", padding: "1rem", background: C.bg, borderRadius: 10, border: `1px solid ${C.border}` }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <p style={{ fontSize: 13, color: C.text }}>Daily reminder</p>
+                  <p style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>
+                    {notifPerm === "granted" ? "Notifications enabled" : "Browser notifications"}
+                  </p>
+                </div>
+                <Btn variant="ghost" onClick={requestNotif}
+                  style={{ color: notifPerm === "granted" ? C.accent : C.muted }}>
+                  {notifPerm === "granted" ? <Bell size={18} /> : <BellOff size={18} />}
+                </Btn>
+              </div>
+            </div>
+
+            <Btn variant="primary" onClick={() => { setShowSettings(false); setSaveMsg(true); setTimeout(() => setSaveMsg(false), 2000); }}
+              style={{ width: "100%", marginTop: "1.25rem", borderRadius: 10, fontSize: 14 }}>
+              {saveMsg ? "Saved ✓" : "Save Settings"}
+            </Btn>
+          </div>
+        </div>
+      )}
 
       {/* NAV */}
       <nav style={{ height: 54, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 1.25rem", position: "sticky", top: 0, background: C.bg, zIndex: 50 }}>
@@ -283,10 +288,10 @@ export default function WorkTracker() {
       </nav>
 
       {/* BODY */}
-      <div style={{ display: "flex", maxWidth: 960, margin: "0 auto", minHeight: "calc(100vh - 54px)" }}>
+      <div className="app-body">
 
         {/* ── LEFT: CALENDAR ── */}
-        <div style={{ flex: 1, padding: "1.25rem", borderRight: `1px solid ${C.border}`, minWidth: 0 }}>
+        <div className="cal-panel">
 
           {/* Month nav */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
@@ -374,7 +379,7 @@ export default function WorkTracker() {
         </div>
 
         {/* ── RIGHT: SESSION PANEL ── */}
-        <div style={{ width: 280, padding: "1.25rem", display: "flex", flexDirection: "column", flexShrink: 0 }}>
+        <div className="session-panel">
           {!selectedDate ? (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: "2rem 0" }}>
               <Calendar size={28} color={C.border} />
