@@ -1,16 +1,47 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Clock, Calendar, TrendingUp, Bell, BellOff, ChevronLeft, ChevronRight,
-  Plus, Trash2, Settings, X, Check, Briefcase
+  Plus, Trash2, Settings, X, Check, Briefcase, Sun, Moon
 } from "lucide-react";
 
 const C = {
-  bg: "#0D0C0A", surface: "#1C1B18", surfaceHover: "#242320",
-  border: "#2E2C28", borderFocus: "#E8A000",
-  accent: "#E8A000", accentDim: "rgba(232,160,0,0.12)", accentText: "#0D0C0A",
-  text: "#F2EDE4", muted: "#7A756C", mutedHover: "#9A9488",
-  green: "#4AA87C", greenBg: "rgba(74,168,124,0.1)",
-  red: "#C94848", teal: "#3AABB8", tealBg: "rgba(58,171,184,0.1)",
+  bg: "var(--bg)", surface: "var(--surface)", surfaceHover: "var(--surfaceHover)",
+  border: "var(--border)", borderFocus: "var(--borderFocus)",
+  accent: "var(--accent)", accentDim: "var(--accentDim)", accentText: "var(--accentText)",
+  text: "var(--text)", muted: "var(--muted)", mutedHover: "var(--mutedHover)",
+  green: "var(--green)", greenBg: "var(--greenBg)",
+  red: "var(--red)", teal: "var(--teal)", tealBg: "var(--tealBg)",
+  calendarInvert: "var(--calendarInvert)",
+  accentDimBorder: "var(--accentDimBorder)",
+  todayBorder: "var(--todayBorder)",
+  hasLogsBorder: "var(--hasLogsBorder)",
+};
+
+const THEMES = {
+  dark: {
+    "--bg": "#0D0C0A", "--surface": "#1C1B18", "--surfaceHover": "#242320",
+    "--border": "#2E2C28", "--borderFocus": "#E8A000",
+    "--accent": "#E8A000", "--accentDim": "rgba(232,160,0,0.12)", "--accentText": "#0D0C0A",
+    "--text": "#F2EDE4", "--muted": "#7A756C", "--mutedHover": "#9A9488",
+    "--green": "#4AA87C", "--greenBg": "rgba(74,168,124,0.1)",
+    "--red": "#C94848", "--teal": "#3AABB8", "--tealBg": "rgba(58,171,184,0.1)",
+    "--calendarInvert": "invert(0.5)",
+    "--accentDimBorder": "rgba(232,160,0,0.3)",
+    "--todayBorder": "rgba(232,160,0,0.35)",
+    "--hasLogsBorder": "rgba(74,168,124,0.2)",
+  },
+  light: {
+    "--bg": "#F8F7F4", "--surface": "#FFFFFF", "--surfaceHover": "#F0EFEA",
+    "--border": "#E2DED6", "--borderFocus": "#E8A000",
+    "--accent": "#E8A000", "--accentDim": "rgba(232,160,0,0.15)", "--accentText": "#0D0C0A",
+    "--text": "#2E2C28", "--muted": "#8A857C", "--mutedHover": "#6A655C",
+    "--green": "#3A8B64", "--greenBg": "rgba(58,139,100,0.1)",
+    "--red": "#C94848", "--teal": "#2B8C96", "--tealBg": "rgba(43,140,150,0.1)",
+    "--calendarInvert": "invert(0)",
+    "--accentDimBorder": "rgba(232,160,0,0.3)",
+    "--todayBorder": "rgba(232,160,0,0.35)",
+    "--hasLogsBorder": "rgba(58,139,100,0.2)",
+  }
 };
 
 const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -48,17 +79,26 @@ export default function WorkTracker() {
   const [showForm, setShowForm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [newSession, setNewSession] = useState({ start: "09:00", end: "17:00", note: "" });
-  const [settings, setSettings] = useState({ name: "", currency: "€", hourlyRate: "" });
+  const [settings, setSettings] = useState({ name: "", currency: "€", hourlyRate: "", theme: "dark" });
   const [notifPerm, setNotifPerm] = useState("default");
   const [notifSent, setNotifSent] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [saveMsg, setSaveMsg] = useState(false);
 
+  const themeMode = settings.theme || "dark";
+  useEffect(() => {
+    const root = document.documentElement;
+    const themeColors = THEMES[themeMode];
+    for (const [key, value] of Object.entries(themeColors)) {
+      root.style.setProperty(key, value);
+    }
+  }, [themeMode]);
+
   useEffect(() => {
     const s = document.createElement("style");
     s.textContent = `
       @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap');
-      * { box-sizing: border-box; margin: 0; padding: 0; }
+      * { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
       body { background: ${C.bg}; }
       ::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-thumb { background: ${C.border}; border-radius: 2px; }
       .wt-input { background: ${C.surface} !important; border: 1px solid ${C.border} !important; color: ${C.text} !important;
@@ -66,7 +106,7 @@ export default function WorkTracker() {
         font-family: 'JetBrains Mono', monospace !important; width: 100% !important; outline: none !important; }
       .wt-input:focus { border-color: ${C.accent} !important; }
       .wt-input::placeholder { color: ${C.muted} !important; }
-      .wt-input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
+      .wt-input[type="time"]::-webkit-calendar-picker-indicator { filter: ${C.calendarInvert}; cursor: pointer; }
       .cal-day:hover { background: ${C.surfaceHover} !important; border-color: ${C.border} !important; }
       .nav-btn:hover { color: ${C.text} !important; }
       .session-row:hover { border-color: ${C.border} !important; }
@@ -172,7 +212,7 @@ export default function WorkTracker() {
       <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 60% 50% at 20% 60%, rgba(232,160,0,0.05) 0%, transparent 60%), radial-gradient(ellipse 50% 40% at 80% 30%, rgba(201,72,72,0.04) 0%, transparent 55%)", pointerEvents: "none" }} />
 
       <div style={{ textAlign: "center", maxWidth: 580, position: "relative" }}>
-        <div style={{ width: 64, height: 64, borderRadius: 16, border: `1px solid ${C.accentDim.replace("0.12","0.3")}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 2rem", background: C.accentDim }}>
+        <div style={{ width: 64, height: 64, borderRadius: 16, border: `1px solid ${C.accentDimBorder}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 2rem", background: C.accentDim }}>
           <Briefcase size={26} color={C.accent} />
         </div>
 
@@ -280,6 +320,9 @@ export default function WorkTracker() {
         </button>
         <div style={{ ...serif, fontSize: 15, color: C.text }}>{MONTH_NAMES[month]} {year}</div>
         <div style={{ display: "flex", gap: 4 }}>
+          <Btn variant="ghost" onClick={() => setSettings(s => ({ ...s, theme: (s.theme === "light" ? "dark" : "light") }))}>
+            {settings.theme === "light" ? <Moon size={15} /> : <Sun size={15} />}
+          </Btn>
           <Btn variant="ghost" onClick={requestNotif} style={{ color: notifPerm === "granted" ? C.accent : C.muted }}>
             {notifPerm === "granted" ? <Bell size={15} /> : <BellOff size={15} />}
           </Btn>
@@ -330,7 +373,7 @@ export default function WorkTracker() {
                   style={{
                     padding: "6px 2px", minHeight: 50,
                     background: isSelected ? C.accent : isToday ? C.accentDim : hasLogs ? C.greenBg : "transparent",
-                    border: `1px solid ${isSelected ? C.accent : isToday ? "rgba(232,160,0,0.35)" : hasLogs ? "rgba(74,168,124,0.2)" : "transparent"}`,
+                    border: `1px solid ${isSelected ? C.accent : isToday ? C.todayBorder : hasLogs ? C.hasLogsBorder : "transparent"}`,
                     borderRadius: 8, color: isSelected ? C.accentText : isFuture ? C.muted : C.text,
                     cursor: "pointer", textAlign: "center", transition: "all 0.12s",
                     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
