@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Clock, Calendar, TrendingUp, Bell, BellOff, ChevronLeft, ChevronRight,
-  Plus, Trash2, Settings, X, Check, Briefcase, Sun, Moon
+  Plus, Trash2, Settings, X, Check, Briefcase, Sun, Moon, Bot
 } from "lucide-react";
 
 const C = {
@@ -84,6 +84,7 @@ export default function WorkTracker() {
   const [notifSent, setNotifSent] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [saveMsg, setSaveMsg] = useState(false);
+  const [showToyTooltip, setShowToyTooltip] = useState(true);
 
   const themeMode = settings.theme || "dark";
   useEffect(() => {
@@ -119,6 +120,11 @@ export default function WorkTracker() {
         .cal-panel { border-right: none; border-bottom: 1px solid ${C.border}; padding: 1rem; }
         .session-panel { width: 100%; padding: 1rem; }
       }
+      @keyframes float-toy {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+      }
+      .toy-companion { animation: float-toy 3s ease-in-out infinite; }
     `;
     document.head.appendChild(s);
     return () => s.remove();
@@ -206,6 +212,28 @@ export default function WorkTracker() {
   const font = { fontFamily: "'JetBrains Mono', monospace" };
   const serif = { fontFamily: "'Playfair Display', serif" };
 
+  const handleToyClick = () => {
+    setView("app");
+    setSelectedDate(todayKey);
+    setShowForm(true);
+    setShowToyTooltip(false);
+  };
+
+  const toyCompanion = (
+    <div style={{ position: "fixed", bottom: "1.5rem", right: "1.5rem", zIndex: 100, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+      {showToyTooltip && (
+        <div style={{ ...font, background: C.surface, border: `1px solid ${C.accent}`, borderRadius: 12, padding: "0.75rem 1.25rem", marginBottom: "0.75rem", fontSize: 13, color: C.text, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", position: "relative", maxWidth: 220, textAlign: "center", lineHeight: 1.5 }}>
+          What are you going to do today? Click me!
+          <div style={{ position: "absolute", bottom: -6, right: 22, width: 10, height: 10, background: C.surface, borderRight: `1px solid ${C.accent}`, borderBottom: `1px solid ${C.accent}`, transform: "rotate(45deg)" }} />
+          <button onClick={(e) => { e.stopPropagation(); setShowToyTooltip(false); }} style={{ position: "absolute", top: 4, right: 4, background: "transparent", border: "none", color: C.muted, cursor: "pointer", padding: 2 }}><X size={12} /></button>
+        </div>
+      )}
+      <button className="toy-companion" onClick={handleToyClick} style={{ background: C.accent, border: "none", borderRadius: "50%", width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: `0 4px 12px ${C.accentDimBorder}`, color: C.accentText, transition: "transform 0.15s" }} onMouseOver={e => e.currentTarget.style.transform = "scale(1.05)"} onMouseOut={e => e.currentTarget.style.transform = "scale(1)"}>
+        <Bot size={28} />
+      </button>
+    </div>
+  );
+
   // ──────────────────────────── HERO ────────────────────────────
   if (view === "hero") return (
     <div style={{ ...font, minHeight: "100vh", background: C.bg, color: C.text, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", position: "relative" }}>
@@ -263,6 +291,7 @@ export default function WorkTracker() {
           <p style={{ marginTop: "2.5rem", fontSize: 12, color: C.muted }}>No sessions logged yet — open the calendar to start.</p>
         )}
       </div>
+      {toyCompanion}
     </div>
   );
 
@@ -541,6 +570,7 @@ export default function WorkTracker() {
           )}
         </div>
       </div>
+      {toyCompanion}
     </div>
   );
 }
